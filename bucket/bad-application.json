@@ -1,0 +1,23 @@
+{
+    "version": "1.2",
+    "description": "Emulate a bad application: hang process, crash, terminate Explorer",
+    "homepage": "https://www.ntwind.com/freeware/badapp.html",
+    "license": "Freeware",
+    "url": "https://www.ntwind.com/download/BadApp.zip",
+    "hash": "809B5FF10C6E732AF19B904BEE59869BC080DEFCA02C5F4872C244CB511D52C7",
+    "extract_dir": "BadApp",
+    "bin": "BadApp.exe",
+    "shortcuts": [
+        [
+            "BadApp.exe",
+            "Bad Application"
+        ]
+    ],
+    "checkver": {
+        "url": "https://www.ntwind.com/download-all.html",
+        "regex": "BadApp\\.zip.*?v([\\d.]+)"
+    },
+    "autoupdate": {
+        "url": "https://www.ntwind.com/download/BadApp.zip"
+    }
+}
