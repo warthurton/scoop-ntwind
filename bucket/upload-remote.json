@@ -24,5 +24,6 @@
     },
     "autoupdate": {
         "url": "https://www.ntwind.com/download/UploadRemote_$version-win-x64.exe"
-    }
+    },
+    "hash": "f1b833bccd4de953a814167f8355d377884847082ca8d6de0ad8fee54f856cdb"
 }
