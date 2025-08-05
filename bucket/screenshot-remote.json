@@ -4,7 +4,6 @@
     "homepage": "https://www.ntwind.com/software/screenshotremote.html",
     "license": "Proprietary",
     "url": "https://www.ntwind.com/download/ScreenshotRemote_1.1.0-win-x64.exe",
-    "hash": "sha256:placeholder",
     "installer": {
         "script": [
             "Start-Process \"$dir\\$fname\" -ArgumentList '/S' -Wait",
