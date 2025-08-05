@@ -1,10 +1,10 @@
 {
-    "version": "2.0",
+    "version": ".",
     "description": "Retrieve information on a window under the mouse pointer",
     "homepage": "https://www.ntwind.com/freeware/wndfrompoint.html",
     "license": "Freeware",
     "url": "https://www.ntwind.com/download/WndFromPoint.zip",
-    "hash": "295465972257F193FAFB1B18E720635EB36FA6D753F356827E8267D893659D04",
+    "hash": "295465972257f193fafb1b18e720635eb36fa6d753f356827e8267d893659d04",
     "extract_dir": "WndFromPoint",
     "bin": "WndFromPoint.exe",
     "shortcuts": [
