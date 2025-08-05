@@ -1,10 +1,10 @@
 {
-    "version": "1.1",
+    "version": ".",
     "description": "Place a solid color overlay over the desktop",
     "homepage": "https://www.ntwind.com/freeware/workspacecover.html",
     "license": "Freeware",
     "url": "https://www.ntwind.com/download/WorkspaceCover.zip",
-    "hash": "0CFC30299B39CCF3692530EBBB2DB0CBCBCEFA04BF84F6E48D28435A2A628FB6",
+    "hash": "0cfc30299b39ccf3692530ebbb2db0cbcbcefa04bf84f6e48d28435a2a628fb6",
     "extract_dir": "WorkspaceCover",
     "bin": "WorkspaceCover.exe",
     "shortcuts": [
