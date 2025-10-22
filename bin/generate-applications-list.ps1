@@ -109,7 +109,7 @@ function Get-LastCommitDate {
         $commitDate = git log -1 --format="%ci" -- $FilePath
         return ($commitDate -split ' ')[0] # Extract only the date part
     } catch {
-        Write-Warning "Failed to get last commit date for $FilePath: $($_)"
+        Write-Warning "Failed to get last commit date for ${FilePath}: $($_)"
         return 'N/A'
     }
 }
@@ -124,7 +124,7 @@ function Get-LastApplicationDate {
         $lastAppDate = & $scriptPath -HomepageUrl $HomepageUrl
         return $lastAppDate
     } catch {
-        Write-Warning "Failed to get last application date for $HomepageUrl: $($_)"
+        Write-Warning "Failed to get last application date for ${HomepageUrl}: $($_)"
         return 'N/A'
     }
 }
