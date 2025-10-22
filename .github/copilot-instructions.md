@@ -49,6 +49,11 @@ This repository is a Scoop bucket for NTWind Software applications. Scoop is a W
 -   **Validation**: Always validate manifests before submitting.
 -   **Testing**: Use Pester for testing. Ensure PowerShell 5.1+ and required modules (`Pester`, `BuildHelpers`) are installed.
 
+## Compatibility and Standards
+
+-   **PowerShell Compatibility**: Ensure all scripts are compatible with both PowerShell 5.1 and the latest versions of PowerShell. Use conditional checks and backward-compatible syntax where necessary.
+-   **Scoop Testing Standards**: Refer to the guidelines in the Scoop repository's [Scoop-00File.Tests.ps1](https://github.com/ScoopInstaller/Scoop/blob/master/test/Scoop-00File.Tests.ps1) for best practices and validation standards. Ensure manifests and scripts comply with these standards during development.
+
 ## GitHub Actions
 
 -   **CI Workflow**: `.github/workflows/ci.yml` runs tests on pull requests and pushes.
@@ -67,8 +72,7 @@ This repository is a Scoop bucket for NTWind Software applications. Scoop is a W
 
 ## Notes
 
--   Follow the [Contributing Guide](https://github.com/ScoopInstaller/.github/blob/main/.github/CONTRIBUTING.md) for submitting changes.
--   Use the `.editorconfig` file to maintain consistent coding styles.
+-   See the [Contributing Guide](https://github.com/ScoopInstaller/.github/blob/main/.github/CONTRIBUTING.md) for submitting changes.
 
 ---
 
