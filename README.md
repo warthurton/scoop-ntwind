@@ -2,6 +2,8 @@
 
 Scoop bucket for [NTWind Software](https://www.ntwind.com/) applications. This bucket provides easy installation of NTWind's Windows utilities through [Scoop](https://scoop.sh), the Windows command-line installer.
 
+📋 **[View all available applications](APPLICATIONS.md)** in this bucket.
+
 A complete list of all NTWind software downloads is available at https://www.ntwind.com/download-all.html
 
 ## How do I install NTWind software?
