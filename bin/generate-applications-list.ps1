@@ -86,9 +86,9 @@ function Get-ManifestInfo {
 
         return [PSCustomObject]@{
             PackageName         = $packageName
-            Description         = $manifest.description ?? 'N/A'
-            Version             = $manifest.version ?? 'N/A'
-            Homepage            = $manifest.homepage ?? ''
+            Description         = if ($manifest.description) { $manifest.description } else { 'N/A' }
+            Version             = if ($manifest.version) { $manifest.version } else { 'N/A' }
+            Homepage            = if ($manifest.homepage) { $manifest.homepage } else { '' }
             DownloadUrl         = $downloadUrl
             LastCommitDate      = $lastCommitDate
             LastApplicationDate = $lastAppDate
