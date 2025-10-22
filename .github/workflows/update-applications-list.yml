@@ -14,11 +14,11 @@ on:
   workflow_dispatch:
   schedule:
     # Run daily at 6:00 UTC
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
   push:
     paths:
-      - 'bucket/*.json'
-      - '!bucket/app-name.json.template'
+      - "bucket/*.json"
+      - "!bucket/app-name.json.template"
 
 jobs:
   update-applications-list:
@@ -38,7 +38,7 @@ jobs:
         run: |
           Write-Host "Running generate-applications-list.ps1..."
           .\bin\generate-applications-list.ps1
-          
+
       - name: Check for changes
         id: check_changes
         shell: pwsh
@@ -72,7 +72,7 @@ jobs:
               Write-Host "Found $($data.Count) incomplete manifests"
               echo "has_incomplete=true" >> $env:GITHUB_OUTPUT
               echo "count=$($data.Count)" >> $env:GITHUB_OUTPUT
-              
+
               # Create issue body
               $body = "## Incomplete Manifests Detected`n`n"
               $body += "The following $($data.Count) manifest(s) are missing required fields:`n`n"
@@ -84,7 +84,7 @@ jobs:
               }
               $body += "`n---`n"
               $body += "*This issue is automatically updated by the Update Applications List workflow.*"
-              
+
               # Save to file for next step
               $body | Out-File -FilePath "issue-body.txt" -Encoding UTF8
             } else {
@@ -102,7 +102,7 @@ jobs:
             const fs = require('fs');
             const issueBody = fs.readFileSync('issue-body.txt', 'utf8');
             const issueTitle = 'Incomplete Manifest Files Need Attention';
-            
+
             // Check if issue already exists
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -111,9 +111,9 @@ jobs:
               labels: ['manifest-incomplete'],
               creator: 'github-actions[bot]'
             });
-            
+
             const existingIssue = issues.find(issue => issue.title === issueTitle);
-            
+
             if (existingIssue) {
               // Update existing issue
               await github.rest.issues.update({
@@ -141,7 +141,7 @@ jobs:
         with:
           script: |
             const issueTitle = 'Incomplete Manifest Files Need Attention';
-            
+
             // Check if issue exists
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -149,9 +149,9 @@ jobs:
               state: 'open',
               labels: ['manifest-incomplete']
             });
-            
+
             const existingIssue = issues.find(issue => issue.title === issueTitle);
-            
+
             if (existingIssue) {
               // Close the issue with a comment
               await github.rest.issues.createComment({
@@ -160,7 +160,7 @@ jobs:
                 issue_number: existingIssue.number,
                 body: '✅ All manifests are now complete! Closing this issue.'
               });
-              
+
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

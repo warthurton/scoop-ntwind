@@ -6,9 +6,9 @@
 .DESCRIPTION
     This script scans all JSON manifest files in the bucket directory and generates
     a markdown file (APPLICATIONS.md) with a table listing all applications.
-    The table includes: package name, description, version, last updated date, 
+    The table includes: package name, description, version, last updated date,
     download URL, and homepage.
-    
+
     For manifests missing required fields, it tracks them for issue reporting.
 .PARAMETER BucketPath
     Path to the bucket directory. Defaults to ../bucket relative to script location.
@@ -33,20 +33,17 @@ function Get-ManifestInfo {
     param(
         [string]$ManifestPath
     )
-    
+
     try {
         $manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
         $fileName = Split-Path $ManifestPath -Leaf
         $packageName = $fileName -replace '\.json$', ''
-        
+
         # Skip template files
         if ($packageName -match 'template') {
             return $null
         }
-        
-        # Get last modified date
-        $lastModified = (Get-Item $ManifestPath).LastWriteTime.ToString('yyyy-MM-dd')
-        
+
         # Extract download URL (handle architecture-specific URLs)
         $downloadUrl = ''
         if ($manifest.url) {
@@ -61,7 +58,7 @@ function Get-ManifestInfo {
                 $downloadUrl = $manifest.architecture.arm64.url
             }
         }
-        
+
         # Track missing fields
         $missingFields = @()
         if (-not $manifest.description -or $manifest.description -eq '') {
@@ -76,20 +73,59 @@ function Get-ManifestInfo {
         if (-not $downloadUrl) {
             $missingFields += 'url'
         }
-        
-        return [PSCustomObject]@{
-            PackageName   = $packageName
-            Description   = $manifest.description ?? 'N/A'
-            Version       = $manifest.version ?? 'N/A'
-            Homepage      = $manifest.homepage ?? ''
-            DownloadUrl   = $downloadUrl
-            LastModified  = $lastModified
-            MissingFields = $missingFields
+
+        # Get last commit date
+        $lastCommitDate = Get-LastCommitDate -FilePath $ManifestPath
+
+        # Get last application version date
+        $lastAppDate = if ($manifest.homepage) {
+            Get-LastApplicationDate -HomepageUrl $manifest.homepage
+        } else {
+            'N/A'
         }
-    }
-    catch {
+
+        return [PSCustomObject]@{
+            PackageName         = $packageName
+            Description         = $manifest.description ?? 'N/A'
+            Version             = $manifest.version ?? 'N/A'
+            Homepage            = $manifest.homepage ?? ''
+            DownloadUrl         = $downloadUrl
+            LastCommitDate      = $lastCommitDate
+            LastApplicationDate = $lastAppDate
+            MissingFields       = $missingFields
+        }
+    } catch {
         Write-Warning "Error parsing manifest $ManifestPath : $_"
         return $null
+    }
+}
+
+# Function to get the last commit date for a file
+function Get-LastCommitDate {
+    param(
+        [string]$FilePath
+    )
+    try {
+        $commitDate = git log -1 --format="%ci" -- $FilePath
+        return ($commitDate -split ' ')[0] # Extract only the date part
+    } catch {
+        Write-Warning "Failed to get last commit date for $FilePath: $($_)"
+        return 'N/A'
+    }
+}
+
+# Function to get the last application version date using checkdate-ntwind.ps1
+function Get-LastApplicationDate {
+    param(
+        [string]$HomepageUrl
+    )
+    try {
+        $scriptPath = Join-Path $PSScriptRoot 'checkdate-ntwind.ps1'
+        $lastAppDate = & $scriptPath -HomepageUrl $HomepageUrl
+        return $lastAppDate
+    } catch {
+        Write-Warning "Failed to get last application date for $HomepageUrl: $($_)"
+        return 'N/A'
     }
 }
 
@@ -97,7 +133,7 @@ function Get-ManifestInfo {
 Write-Host "Scanning manifests in: $BucketPath"
 
 # Get all JSON files in bucket directory
-$manifestFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' | 
+$manifestFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' |
     Where-Object { $_.Name -notmatch 'template' }
 
 if ($manifestFiles.Count -eq 0) {
@@ -136,15 +172,15 @@ $markdown += "Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
 $markdown += ""
 $markdown += "## Application List"
 $markdown += ""
-$markdown += "| Package Name | Description | Version | Last Updated | Download | Homepage |"
-$markdown += "|--------------|-------------|---------|--------------|----------|----------|"
+$markdown += "| Package Name | Description | Version | Last Commit Date | Last Application Date | Download | Homepage |"
+$markdown += "|--------------|-------------|---------|------------------|-----------------------|----------|----------|"
 
 foreach ($app in $apps) {
     $description = $app.Description -replace '\|', '\|' # Escape pipes
     $downloadLink = if ($app.DownloadUrl) { "[Download]($($app.DownloadUrl))" } else { "N/A" }
     $homepageLink = if ($app.Homepage) { "[Link]($($app.Homepage))" } else { "N/A" }
-    
-    $markdown += "| ``$($app.PackageName)`` | $description | $($app.Version) | $($app.LastModified) | $downloadLink | $homepageLink |"
+
+    $markdown += "| ``$($app.PackageName)`` | $description | $($app.Version) | $($app.LastCommitDate) | $($app.LastApplicationDate) | $downloadLink | $homepageLink |"
 }
 
 # Add section about incomplete manifests if any exist
@@ -156,7 +192,7 @@ if ($incompleteApps.Count -gt 0 -and -not $SkipIssueTracking) {
     $markdown += ""
     $markdown += "| Package Name | Missing Fields |"
     $markdown += "|--------------|----------------|"
-    
+
     foreach ($app in $incompleteApps) {
         $missingFieldsList = $app.MissingFields -join ', '
         $markdown += "| ``$($app.PackageName)`` | $missingFieldsList |"
@@ -165,14 +201,14 @@ if ($incompleteApps.Count -gt 0 -and -not $SkipIssueTracking) {
 
 # Write to file
 $markdownContent = $markdown -join "`n"
-Set-Content -Path $OutputFile -Value $markdownContent -Encoding UTF8 -NoNewline
+Set-Content -Path $OutputFile -Value $markdownContent -Encoding UTF8
 
 Write-Host "Generated $OutputFile"
 Write-Host "Total applications: $($apps.Count)"
 
 if ($incompleteApps.Count -gt 0) {
     Write-Host "Applications with missing fields: $($incompleteApps.Count)"
-    
+
     # Output JSON for GitHub Actions to use for issue creation
     $issueDataFile = Join-Path $PSScriptRoot '..' 'incomplete-manifests.json'
     $issueData = @{
