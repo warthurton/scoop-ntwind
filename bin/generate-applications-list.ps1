@@ -77,11 +77,17 @@ function Get-ManifestInfo {
         # Get last commit date
         $lastCommitDate = Get-LastCommitDate -FilePath $ManifestPath
 
-        # Get last application version date
-        $lastAppDate = if ($manifest.homepage) {
-            Get-LastApplicationDate -HomepageUrl $manifest.homepage
-        } else {
-            'N/A'
+        # Get last application version date only if version has changed
+        $lastAppDate = 'N/A'
+        if ($manifest.homepage) {
+            # Check if version has changed in the last commit
+            $versionChanged = Test-VersionChanged -FilePath $ManifestPath -CurrentVersion $manifest.version
+            if ($versionChanged) {
+                $lastAppDate = Get-LastApplicationDate -HomepageUrl $manifest.homepage
+            } else {
+                # Version hasn't changed, skip expensive HTTP check
+                $lastAppDate = ''
+            }
         }
 
         return [PSCustomObject]@{
@@ -111,6 +117,31 @@ function Get-LastCommitDate {
     } catch {
         Write-Warning "Failed to get last commit date for ${FilePath}: $($_)"
         return 'N/A'
+    }
+}
+
+# Function to check if the version has changed in recent commits
+function Test-VersionChanged {
+    param(
+        [string]$FilePath,
+        [string]$CurrentVersion
+    )
+    try {
+        # Get the version from the previous commit
+        $previousContent = git show HEAD~1:$FilePath 2>$null
+        if (-not $previousContent) {
+            # File is new or no previous commit, consider version as changed
+            return $true
+        }
+        
+        $previousManifest = $previousContent | ConvertFrom-Json
+        $previousVersion = $previousManifest.version
+        
+        # Compare versions
+        return ($CurrentVersion -ne $previousVersion)
+    } catch {
+        # If we can't get previous version, assume it changed to be safe
+        return $true
     }
 }
 
