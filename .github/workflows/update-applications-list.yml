@@ -1,0 +1,176 @@
+name: Update Applications List
+
+# This workflow generates APPLICATIONS.md listing all packages in the bucket.
+# It runs daily, can be triggered manually, and runs when bucket files are modified.
+# The generated APPLICATIONS.md file can be published to GitHub Pages.
+# To enable GitHub Pages:
+# 1. Go to repository Settings > Pages
+# 2. Set Source to "Deploy from a branch"
+# 3. Select branch "main" (or "master") and folder "/ (root)"
+# 4. Save and wait for deployment
+# The APPLICATIONS.md will be accessible at: https://<username>.github.io/<repo>/APPLICATIONS
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 6:00 UTC
+    - cron: "0 6 * * *"
+  push:
+    branches:
+      - 'main'
+      - 'master'
+    paths:
+      - "bucket/*.json"
+      - "!bucket/app-name.json.template"
+
+jobs:
+  update-applications-list:
+    name: Generate APPLICATIONS.md
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate applications list
+        shell: pwsh
+        run: |
+          Write-Host "Running generate-applications-list.ps1..."
+          .\bin\generate-applications-list.ps1
+
+      - name: Check for changes
+        id: check_changes
+        shell: pwsh
+        run: |
+          $status = git status --porcelain
+          if ($status) {
+            Write-Host "Changes detected"
+            echo "changes=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No changes detected"
+            echo "changes=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add APPLICATIONS.md
+          git commit -m "chore: Update APPLICATIONS.md [skip ci]"
+          git push
+
+      - name: Check for incomplete manifests
+        id: check_incomplete
+        shell: pwsh
+        run: |
+          if (Test-Path "incomplete-manifests.json") {
+            $data = Get-Content "incomplete-manifests.json" | ConvertFrom-Json
+            if ($data.Count -gt 0) {
+              Write-Host "Found $($data.Count) incomplete manifests"
+              echo "has_incomplete=true" >> $env:GITHUB_OUTPUT
+              echo "count=$($data.Count)" >> $env:GITHUB_OUTPUT
+
+              # Create issue body
+              $body = "## Incomplete Manifests Detected`n`n"
+              $body += "The following $($data.Count) manifest(s) are missing required fields:`n`n"
+              $body += "| Package Name | Missing Fields |`n"
+              $body += "|--------------|----------------|`n"
+              foreach ($app in $data.Apps) {
+                $fields = $app.MissingFields -join ', '
+                $body += "| ``$($app.PackageName)`` | $fields |`n"
+              }
+              $body += "`n---`n"
+              $body += "*This issue is automatically updated by the Update Applications List workflow.*"
+
+              # Save to file for next step
+              $body | Out-File -FilePath "issue-body.txt" -Encoding UTF8
+            } else {
+              echo "has_incomplete=false" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            echo "has_incomplete=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Create or update issue for incomplete manifests
+        if: steps.check_incomplete.outputs.has_incomplete == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issueBody = fs.readFileSync('issue-body.txt', 'utf8');
+            const issueTitle = 'Incomplete Manifest Files Need Attention';
+
+            // Check if issue already exists
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['manifest-incomplete'],
+              creator: 'github-actions[bot]'
+            });
+
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+              console.log(`Updated issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['manifest-incomplete', 'maintenance']
+              });
+              console.log(`Created issue #${newIssue.number}`);
+            }
+
+      - name: Close incomplete manifests issue if all fixed
+        if: steps.check_incomplete.outputs.has_incomplete == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueTitle = 'Incomplete Manifest Files Need Attention';
+
+            // Check if issue exists
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['manifest-incomplete']
+            });
+
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              // Close the issue with a comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: '✅ All manifests are now complete! Closing this issue.'
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                state: 'closed'
+              });
+              console.log(`Closed issue #${existingIssue.number}`);
+            } else {
+              console.log('No open incomplete manifests issue found');
+            }
