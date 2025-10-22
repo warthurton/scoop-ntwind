@@ -133,10 +133,10 @@ function Test-VersionChanged {
             # File is new or no previous commit, consider version as changed
             return $true
         }
-        
+
         $previousManifest = $previousContent | ConvertFrom-Json
         $previousVersion = $previousManifest.version
-        
+
         # Compare versions
         return ($CurrentVersion -ne $previousVersion)
     } catch {
