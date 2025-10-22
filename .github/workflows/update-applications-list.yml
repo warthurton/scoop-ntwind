@@ -1,5 +1,15 @@
 name: Update Applications List
 
+# This workflow generates APPLICATIONS.md listing all packages in the bucket.
+# It runs daily, can be triggered manually, and runs when bucket files are modified.
+# The generated APPLICATIONS.md file can be published to GitHub Pages.
+# To enable GitHub Pages:
+# 1. Go to repository Settings > Pages
+# 2. Set Source to "Deploy from a branch"
+# 3. Select branch "main" (or "master") and folder "/ (root)"
+# 4. Save and wait for deployment
+# The APPLICATIONS.md will be accessible at: https://<username>.github.io/<repo>/APPLICATIONS
+
 on:
   workflow_dispatch:
   schedule:
