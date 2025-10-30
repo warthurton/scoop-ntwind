@@ -1,9 +1,14 @@
+// Disable line length rule
 {
-    // Disable line length rule
     "MD013": false,
 
     // Require unique headings only among siblings
     "MD024": {
         "siblings_only": true
-    }
+    },
+
+    // Ignore specific files
+    "ignoreFiles": [
+        ".github/copilot-instructions.md"
+    ]
 }
