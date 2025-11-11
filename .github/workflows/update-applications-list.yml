@@ -17,8 +17,8 @@ on:
     - cron: "0 6 * * *"
   push:
     branches:
-      - 'main'
-      - 'master'
+      - "main"
+      - "master"
     paths:
       - "bucket/*.json"
       - "!bucket/app-name.json.template"
@@ -36,13 +36,46 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check for new commits since last run
+        id: check_new_commits
+        if: github.event_name == 'schedule'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get the last successful workflow run
+          $runs = gh api repos/$env:GITHUB_REPOSITORY/actions/workflows/update-applications-list.yml/runs `
+            --jq '.workflow_runs | map(select(.conclusion == "success" and .event == "schedule")) | .[0].head_sha' `
+            2>$null
+
+          if ($runs) {
+            $lastRunSHA = $runs
+            $currentSHA = git rev-parse HEAD
+
+            Write-Host "Last successful run SHA: $lastRunSHA"
+            Write-Host "Current HEAD SHA: $currentSHA"
+
+            if ($lastRunSHA -eq $currentSHA) {
+              Write-Host "No new commits since last successful run. Skipping workflow."
+              echo "skip=true" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "New commits detected. Continuing workflow."
+              echo "skip=false" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "No previous successful run found. Continuing workflow."
+            echo "skip=false" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Generate applications list
+        if: steps.check_new_commits.outputs.skip != 'true'
         shell: pwsh
         run: |
           Write-Host "Running generate-applications-list.ps1..."
           .\bin\generate-applications-list.ps1
 
       - name: Check for changes
+        if: steps.check_new_commits.outputs.skip != 'true'
         id: check_changes
         shell: pwsh
         run: |
@@ -56,7 +89,7 @@ jobs:
           }
 
       - name: Commit and push changes
-        if: steps.check_changes.outputs.changes == 'true'
+        if: steps.check_new_commits.outputs.skip != 'true' && steps.check_changes.outputs.changes == 'true'
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
@@ -66,6 +99,7 @@ jobs:
           git push
 
       - name: Check for incomplete manifests
+        if: steps.check_new_commits.outputs.skip != 'true'
         id: check_incomplete
         shell: pwsh
         run: |
@@ -98,7 +132,7 @@ jobs:
           }
 
       - name: Create or update issue for incomplete manifests
-        if: steps.check_incomplete.outputs.has_incomplete == 'true'
+        if: steps.check_new_commits.outputs.skip != 'true' && steps.check_incomplete.outputs.has_incomplete == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -139,7 +173,7 @@ jobs:
             }
 
       - name: Close incomplete manifests issue if all fixed
-        if: steps.check_incomplete.outputs.has_incomplete == 'false'
+        if: steps.check_new_commits.outputs.skip != 'true' && steps.check_incomplete.outputs.has_incomplete == 'false'
         uses: actions/github-script@v7
         with:
           script: |
