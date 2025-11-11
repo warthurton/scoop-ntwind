@@ -7,7 +7,12 @@
     "hash": "5a4e69d6698b9187be516be589712f1baede5c3f5fee1b4b6cf01de6f786cce0",
     "extract_dir": "HotkeyScreener",
     "bin": "HotkeyScreener.exe",
-    "shortcuts": [["HotkeyScreener.exe", "Hotkey Screener"]],
+    "shortcuts": [
+        [
+            "HotkeyScreener.exe",
+            "Hotkey Screener"
+        ]
+    ],
     "checkver": {
         "url": "https://www.ntwind.com/download-all.html",
         "regex": "<strong>Hotkey Screener</strong>[\\s\\S]*?<td[^>]*>([\\d.]+)</td>"
