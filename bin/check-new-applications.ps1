@@ -130,17 +130,17 @@ function Get-ApplicationNameFromFileName {
 # Create a GitHub issue for a new application
 function New-GitHubIssue {
     param(
-        [string]$AppName,
-        [string]$FileName,
-        [string]$Url
+        [string]$appName,
+        [string]$fileName,
+        [string]$url
     )
 
     $title = "Add $appName to bucket"
     $body = @"
 New NTWind application detected: **$appName**
 
-**File:** ``$FileName``
-**Download URL:** $Url
+**File:** ``$fileName``
+**Download URL:** $url
 
 This application was found on https://www.ntwind.com/download-all.html but is not yet in the bucket.
 
@@ -148,7 +148,6 @@ This application was found on https://www.ntwind.com/download-all.html but is no
 - [ ] Create manifest for ``$appName``
 - [ ] Verify application details
 - [ ] Test installation via Scoop
-- [ ] Update APPLICATIONS.md if automated generation is re-enabled
 "@
 
     try {
@@ -198,7 +197,7 @@ if ($newApps.Count -eq 0) {
         Write-Host "  - $appName ($($app.fileName))"
 
         if ($CreateIssues -and (Get-Command gh -ErrorAction SilentlyContinue)) {
-            New-GitHubIssue -AppName $appName -FileName $app.fileName -Url $app.url
+            New-GitHubIssue -appName $appName -fileName $app.fileName -url $app.url
         }
     }
 
