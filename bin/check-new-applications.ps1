@@ -30,14 +30,24 @@ function Get-BucketApplications {
     param([string]$BucketPath)
     
     $apps = @{}
-    $jsonFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' -Exclude '*template*', '*bad-application*'
+    
+    if (-not (Test-Path $BucketPath)) {
+        return $apps
+    }
+    
+    $jsonFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' | 
+                 Where-Object { $_.Name -notmatch 'template|bad-application' }
     
     foreach ($file in $jsonFiles) {
-        $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
-        $appName = $file.BaseName
-        $apps[$appName] = @{
-            path = $file.FullName
-            manifest = $content
+        try {
+            $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+            $appName = $file.BaseName
+            $apps[$appName] = @{
+                path = $file.FullName
+                manifest = $content
+            }
+        } catch {
+            Write-Warning "Failed to parse $($file.Name): $($_)"
         }
     }
     
@@ -77,7 +87,7 @@ function Get-AvailableApplications {
         
         return $apps
     } catch {
-        Write-Error "Failed to fetch download page: $_"
+        Write-Error "Failed to fetch download page: $($_)"
         return @{}
     }
 }
@@ -157,7 +167,7 @@ This application was found on https://www.ntwind.com/download-all.html but is no
         
         Write-Host "  ✓ Issue created for $appName"
     } catch {
-        Write-Error "Failed to create issue for $appName: $_"
+        Write-Error "Failed to create issue for ${appName}: $($_)"
     }
 }
 
