@@ -21,7 +21,7 @@
 
 param(
     [string]$DownloadPageUrl = 'https://www.ntwind.com/download-all.html',
-    [string]$BucketPath = (Join-Path $PSScriptRoot '..' 'bucket'),
+    [string]$BucketPath = (Join-Path -Path $PSScriptRoot -ChildPath '..\bucket'),
     [switch]$CreateIssues
 )
 
@@ -36,7 +36,7 @@ function Get-BucketApplications {
     }
 
     $jsonFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' |
-                 Where-Object { $_.Name -notmatch 'template|bad-application' }
+        Where-Object { $_.Name -notmatch 'template|bad-application' }
 
     foreach ($file in $jsonFiles) {
         try {
@@ -46,7 +46,8 @@ function Get-BucketApplications {
                 path = $file.FullName
                 manifest = $content
             }
-        } catch {
+        }
+        catch {
             Write-Warning "Failed to parse $($file.Name): $($_)"
         }
     }
@@ -86,7 +87,8 @@ function Get-AvailableApplications {
         }
 
         return $apps
-    } catch {
+    }
+    catch {
         Write-Error "Failed to fetch download page: $($_)"
         return @{}
     }
@@ -98,24 +100,24 @@ function Get-ApplicationNameFromFileName {
 
     # Map of common file name patterns to bucket names
     $nameMap = @{
-        'AltTabTer'       = 'alt-tab-terminator'
-        'BadApp'          = 'bad-application'
-        'Clipaste'        = 'clipaste'
-        'ClipboardRemote' = 'clipboard-remote'
-        'CloseAll'        = 'close-all-windows'
-        'Hstart'          = 'hidden-start'
-        'HotkeyScreener'  = 'hotkey-screener'
-        'ScreenshotRemote'= 'screenshot-remote'
-        'StickyPreviews'  = 'sticky-previews'
-        'TaskSwitchXP'    = 'taskswitchxp'
-        'UploadRemote'    = 'upload-remote'
-        'VistaSwitcher'   = 'vistaswitcher'
-        'VSubst'          = 'visual-subst'
-        'WinCam'          = 'wincam'
-        'WindowSpace'     = 'windowspace'
-        'WinSnap'         = 'winsnap'
-        'WndFromPoint'    = 'wndfrompoint'
-        'WorkspaceCover'  = 'workspacecover'
+        'AltTabTer'        = 'alt-tab-terminator'
+        'BadApp'           = 'bad-application'
+        'Clipaste'         = 'clipaste'
+        'ClipboardRemote'  = 'clipboard-remote'
+        'CloseAll'         = 'close-all-windows'
+        'Hstart'           = 'hidden-start'
+        'HotkeyScreener'   = 'hotkey-screener'
+        'ScreenshotRemote' = 'screenshot-remote'
+        'StickyPreviews'   = 'sticky-previews'
+        'TaskSwitchXP'     = 'taskswitchxp'
+        'UploadRemote'     = 'upload-remote'
+        'VistaSwitcher'    = 'vistaswitcher'
+        'VSubst'           = 'visual-subst'
+        'WinCam'           = 'wincam'
+        'WindowSpace'      = 'windowspace'
+        'WinSnap'          = 'winsnap'
+        'WndFromPoint'     = 'wndfrompoint'
+        'WorkspaceCover'   = 'workspacecover'
     }
 
     foreach ($pattern in $nameMap.Keys) {
@@ -130,30 +132,30 @@ function Get-ApplicationNameFromFileName {
 # Create a GitHub issue for a new application
 function New-GitHubIssue {
     param(
-        [string]$appName,
-        [string]$fileName,
-        [string]$url
+        [string] $appName,
+        [string] $fileName,
+        [string] $url
     )
 
     $title = "Add $appName to bucket"
     $body = @"
 New NTWind application detected: **$appName**
 
-**File:** ``$fileName``
+**File:** $fileName
 **Download URL:** $url
 
 This application was found on https://www.ntwind.com/download-all.html but is not yet in the bucket.
 
 ## To-do
-- [ ] Create manifest for ``$appName``
+- [ ] Create manifest for $appName
 - [ ] Verify application details
 - [ ] Test installation via Scoop
 "@
 
-    try {
-        Write-Host "Creating issue for $appName..."
+    Write-Host "Creating issue for $appName..."
 
-        # Check if issue already exists for this application
+    # Check if issue already exists for this application
+    try {
         $existingIssues = gh issue list --search "title:""$title""" --json title,state --limit 100 2>$null
 
         if ($existingIssues | ConvertFrom-Json | Where-Object { $_.state -eq 'OPEN' }) {
@@ -164,9 +166,10 @@ This application was found on https://www.ntwind.com/download-all.html but is no
         $escapedBody = $body -replace '"', '\"' -replace "`n", '\n'
         gh issue create --title $title --body $body --assignee @me 2>$null
 
-        Write-Host "  ✓ Issue created for $appName"
-    } catch {
-        Write-Error "Failed to create issue for ${appName}: $($_)"
+        Write-Host "  Issue created for $appName"
+    }
+    catch {
+        Write-Error ("Failed to create issue for {0}: {1}" -f $appName, $_)
     }
 }
 
@@ -175,10 +178,10 @@ Write-Host "Checking for new NTWind applications..."
 Write-Host ""
 
 $bucketApps = Get-BucketApplications $BucketPath
-Write-Host "Found $($bucketApps.Count) applications in bucket"
+Write-Host ('Found {0} applications in bucket' -f $bucketApps.Count)
 
 $availableApps = Get-AvailableApplications $DownloadPageUrl
-Write-Host "Found $($availableApps.Count) applications available for download"
+Write-Host ('Found {0} applications available for download' -f $availableApps.Count)
 Write-Host ""
 
 $newApps = @{}
@@ -189,20 +192,20 @@ foreach ($appName in $availableApps.Keys) {
 }
 
 if ($newApps.Count -eq 0) {
-    Write-Host "✓ No new applications found"
-} else {
-    Write-Host "Found $($newApps.Count) new application(s):"
-    foreach ($appName in $newApps.Keys | Sort-Object) {
-        $app = $newApps[$appName]
-        Write-Host "  - $appName ($($app.fileName))"
-
+    Write-Host "No new applications found"
+}
+else {
+        Write-Host ('Found {0} new application(s):' -f $newApps.Count)
+        foreach ($appName in $newApps.Keys | Sort-Object) {
+            $app = $newApps[$appName]
+            Write-Host ('  - {0} ({1})' -f $appName, $app.fileName)
         if ($CreateIssues -and (Get-Command gh -ErrorAction SilentlyContinue)) {
             New-GitHubIssue -appName $appName -fileName $app.fileName -url $app.url
         }
     }
 
     if ($CreateIssues -and -not (Get-Command gh -ErrorAction SilentlyContinue)) {
-        Write-Warning "GitHub CLI (gh) not found. Skipping issue creation."
-        Write-Host "Install GitHub CLI from: https://cli.github.com/"
+        Write-Warning 'GitHub CLI (gh) not found. Skipping issue creation.'
+        Write-Host 'Install GitHub CLI from: https://cli.github.com/'
     }
 }
