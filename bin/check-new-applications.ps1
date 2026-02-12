@@ -36,7 +36,7 @@ function Get-BucketApplications {
     }
 
     $jsonFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' |
-        Where-Object { $_.Name -notmatch 'template|bad-application' }
+        Where-Object { $_.Name -notmatch 'template' }
 
     foreach ($file in $jsonFiles) {
         try {
