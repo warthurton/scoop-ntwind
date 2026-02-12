@@ -28,16 +28,16 @@ param(
 # Get list of existing applications in the bucket
 function Get-BucketApplications {
     param([string]$BucketPath)
-    
+
     $apps = @{}
-    
+
     if (-not (Test-Path $BucketPath)) {
         return $apps
     }
-    
-    $jsonFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' | 
+
+    $jsonFiles = Get-ChildItem -Path $BucketPath -Filter '*.json' |
                  Where-Object { $_.Name -notmatch 'template|bad-application' }
-    
+
     foreach ($file in $jsonFiles) {
         try {
             $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
@@ -50,33 +50,33 @@ function Get-BucketApplications {
             Write-Warning "Failed to parse $($file.Name): $($_)"
         }
     }
-    
+
     return $apps
 }
 
 # Fetch and parse the download page to find applications
 function Get-AvailableApplications {
     param([string]$Url)
-    
+
     try {
         Write-Host "Fetching NTWind download page from: $Url"
         $response = Invoke-WebRequest -Uri $Url -UseBasicParsing
         $html = $response.Content
-        
+
         # Parse HTML to find application links and information
         # Look for download links and application information patterns
         $downloadPattern = '/download/(?<file>[^"'']+)'
         $matches = [regex]::Matches($html, $downloadPattern)
-        
+
         $apps = @{}
-        
+
         foreach ($match in $matches) {
             $fileName = $match.Groups['file'].Value
-            
+
             # Try to extract application name from file name
             # Example: "AltTabTer_6.6-setup.exe" -> "alt-tab-terminator"
             $appName = Get-ApplicationNameFromFileName $fileName
-            
+
             if ($appName -and -not $apps.ContainsKey($appName)) {
                 $apps[$appName] = @{
                     fileName = $fileName
@@ -84,7 +84,7 @@ function Get-AvailableApplications {
                 }
             }
         }
-        
+
         return $apps
     } catch {
         Write-Error "Failed to fetch download page: $($_)"
@@ -95,7 +95,7 @@ function Get-AvailableApplications {
 # Map file names to bucket application names
 function Get-ApplicationNameFromFileName {
     param([string]$FileName)
-    
+
     # Map of common file name patterns to bucket names
     $nameMap = @{
         'AltTabTer'       = 'alt-tab-terminator'
@@ -117,13 +117,13 @@ function Get-ApplicationNameFromFileName {
         'WndFromPoint'    = 'wndfrompoint'
         'WorkspaceCover'  = 'workspacecover'
     }
-    
+
     foreach ($pattern in $nameMap.Keys) {
         if ($FileName -like "$pattern*") {
             return $nameMap[$pattern]
         }
     }
-    
+
     return $null
 }
 
@@ -134,7 +134,7 @@ function New-GitHubIssue {
         [string]$FileName,
         [string]$Url
     )
-    
+
     $title = "Add $appName to bucket"
     $body = @"
 New NTWind application detected: **$appName**
@@ -153,18 +153,18 @@ This application was found on https://www.ntwind.com/download-all.html but is no
 
     try {
         Write-Host "Creating issue for $appName..."
-        
+
         # Check if issue already exists for this application
         $existingIssues = gh issue list --search "title:""$title""" --json title,state --limit 100 2>$null
-        
+
         if ($existingIssues | ConvertFrom-Json | Where-Object { $_.state -eq 'OPEN' }) {
             Write-Host "  Issue already exists for $appName (skipping)"
             return
         }
-        
+
         $escapedBody = $body -replace '"', '\"' -replace "`n", '\n'
         gh issue create --title $title --body $body --assignee @me 2>$null
-        
+
         Write-Host "  ✓ Issue created for $appName"
     } catch {
         Write-Error "Failed to create issue for ${appName}: $($_)"
@@ -196,12 +196,12 @@ if ($newApps.Count -eq 0) {
     foreach ($appName in $newApps.Keys | Sort-Object) {
         $app = $newApps[$appName]
         Write-Host "  - $appName ($($app.fileName))"
-        
+
         if ($CreateIssues -and (Get-Command gh -ErrorAction SilentlyContinue)) {
             New-GitHubIssue -AppName $appName -FileName $app.fileName -Url $app.url
         }
     }
-    
+
     if ($CreateIssues -and -not (Get-Command gh -ErrorAction SilentlyContinue)) {
         Write-Warning "GitHub CLI (gh) not found. Skipping issue creation."
         Write-Host "Install GitHub CLI from: https://cli.github.com/"

@@ -18,6 +18,7 @@ scoop install ntwind/<app-name>
 ```
 
 For example, to install a specific NTWind application:
+
 ```pwsh
 scoop install ntwind/some-ntwind-app
 ```
