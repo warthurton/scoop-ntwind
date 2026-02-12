@@ -204,14 +204,34 @@ $markdown += ""
 $markdown += "## Application List"
 $markdown += ""
 $markdown += "| Package Name | Description | Version | Last Commit Date | Last Application Date | Download | Homepage |"
-$markdown += "|--------------|-------------|---------|------------------|-----------------------|----------|----------|"
+$markdown += "| ------------ | ----------- | ------- | ---------------- | --------------------- | -------- | -------- |"
 
 foreach ($app in $apps) {
     $description = $app.Description -replace '\|', '\|' # Escape pipes
-    $downloadLink = if ($app.DownloadUrl) { "[Download]($($app.DownloadUrl))" } else { "N/A" }
-    $homepageLink = if ($app.Homepage) { "[Link]($($app.Homepage))" } else { "N/A" }
 
-    $markdown += "| ``$($app.PackageName)`` | $description | $($app.Version) | $($app.LastCommitDate) | $($app.LastApplicationDate) | $downloadLink | $homepageLink |"
+    # Create descriptive download link - extract filename from URL
+    $downloadLink = if ($app.DownloadUrl) {
+        $filename = ($app.DownloadUrl -split '/')[-1]
+        "[$filename]($($app.DownloadUrl))"
+    } else {
+        "N/A"
+    }
+
+    # Create descriptive homepage link using app name
+    $homepageLink = if ($app.Homepage) {
+        "[$($app.PackageName) homepage]($($app.Homepage))"
+    } else {
+        "N/A"
+    }
+
+    # Format Last Application Date - use dash for empty values to maintain table consistency
+    $lastAppDate = if ($app.LastApplicationDate -and $app.LastApplicationDate -ne '' -and $app.LastApplicationDate -ne 'N/A') {
+        $app.LastApplicationDate
+    } else {
+        '-'
+    }
+
+    $markdown += "| ``$($app.PackageName)`` | $description | $($app.Version) | $($app.LastCommitDate) | $lastAppDate | $downloadLink | $homepageLink |"
 }
 
 # Add section about incomplete manifests if any exist
@@ -222,7 +242,7 @@ if ($incompleteApps.Count -gt 0 -and -not $SkipIssueTracking) {
     $markdown += "The following manifests are missing some fields and may need to be updated:"
     $markdown += ""
     $markdown += "| Package Name | Missing Fields |"
-    $markdown += "|--------------|----------------|"
+    $markdown += "| ------------ | -------------- |"
 
     foreach ($app in $incompleteApps) {
         $missingFieldsList = $app.MissingFields -join ', '
@@ -230,8 +250,8 @@ if ($incompleteApps.Count -gt 0 -and -not $SkipIssueTracking) {
     }
 }
 
-# Write to file
-$markdownContent = $markdown -join "`n"
+# Write to file (using CRLF line endings)
+$markdownContent = $markdown -join "`r`n"
 Set-Content -Path $OutputFile -Value $markdownContent -Encoding UTF8
 
 Write-Host "Generated $OutputFile"
