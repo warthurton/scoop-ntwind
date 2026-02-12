@@ -1,0 +1,36 @@
+name: Check for New Applications
+
+# This workflow runs weekly to check the NTWind download page for new applications.
+# If new applications are detected, it creates GitHub issues for them.
+# Can also be triggered manually from the Actions tab.
+
+on:
+    schedule:
+        # Run every Monday at 09:00 UTC
+        - cron: "0 9 * * 1"
+    workflow_dispatch:
+
+jobs:
+    check-new-applications:
+        name: Check for New NTWind Applications
+        runs-on: windows-latest
+        permissions:
+            issues: write
+            contents: read
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Download NTWind page and check for new applications
+              shell: pwsh
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  ./bin/check-new-applications.ps1 -CreateIssues
+
+            - name: Log summary
+              if: always()
+              shell: pwsh
+              run: |
+                  Write-Host "Workflow completed successfully"
