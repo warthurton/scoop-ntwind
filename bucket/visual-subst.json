@@ -1,10 +1,10 @@
 {
-    "version": "5.9",
+    "version": "6.0",
     "description": "Mount folders as virtual drives",
     "homepage": "https://www.ntwind.com/software/vsubst.html",
     "license": "Proprietary",
-    "url": "https://www.ntwind.com/download/VSubst_5.9-setup.exe",
-    "hash": "79A0A6AB7EA9F29D2CE94B9164E8D7DF696C44105A803DD99533F2A8A0A84445",
+    "url": "https://www.ntwind.com/download/VSubst_6.0-setup.exe",
+    "hash": "67206f2b53f59765e92e266e4717cd3dd7aad5023dc05cb5f608770b3b481bd5",
     "installer": {
         "script": [
             "Start-Process \"$dir\\$fname\" -ArgumentList '/S' -Wait",
