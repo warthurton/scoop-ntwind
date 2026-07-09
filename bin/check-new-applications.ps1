@@ -169,7 +169,7 @@ This application was found on https://www.ntwind.com/download-all.html but is no
             return
         }
 
-        gh issue create --title $title --body $body --assignee '@me' 2>$null | Out-Null
+        gh issue create --title $title --body $body 2>$null | Out-Null
 
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to create issue for $appName (gh exit code: $LASTEXITCODE)"
