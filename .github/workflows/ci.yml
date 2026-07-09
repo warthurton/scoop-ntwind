@@ -3,8 +3,8 @@ name: Tests
 on:
   push:
     branches:
-      - 'main'
-      - 'master'
+      - "main"
+      - "master"
   pull_request:
   workflow_dispatch:
 
@@ -14,12 +14,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Bucket
-        uses: actions/checkout@main
+        uses: actions/checkout@v5
         with:
           fetch-depth: 2
           path: my_bucket
       - name: Checkout Scoop
-        uses: actions/checkout@main
+        uses: actions/checkout@v5
         with:
           repository: ScoopInstaller/Scoop
           path: scoop_core
@@ -38,12 +38,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Bucket
-        uses: actions/checkout@main
+        uses: actions/checkout@v5
         with:
           fetch-depth: 2
           path: my_bucket
       - name: Checkout Scoop
-        uses: actions/checkout@main
+        uses: actions/checkout@v5
         with:
           repository: ScoopInstaller/Scoop
           path: scoop_core
