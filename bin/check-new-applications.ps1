@@ -43,11 +43,10 @@ function Get-BucketApplications {
             $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
             $appName = $file.BaseName
             $apps[$appName] = @{
-                path = $file.FullName
+                path     = $file.FullName
                 manifest = $content
             }
-        }
-        catch {
+        } catch {
             Write-Warning "Failed to parse $($file.Name): $($_)"
         }
     }
@@ -81,14 +80,13 @@ function Get-AvailableApplications {
             if ($appName -and -not $apps.ContainsKey($appName)) {
                 $apps[$appName] = @{
                     fileName = $fileName
-                    url = "https://www.ntwind.com/download/$fileName"
+                    url      = "https://www.ntwind.com/download/$fileName"
                 }
             }
         }
 
         return $apps
-    }
-    catch {
+    } catch {
         Write-Error "Failed to fetch download page: $($_)"
         return @{}
     }
@@ -107,6 +105,9 @@ function Get-ApplicationNameFromFileName {
         'CloseAll'         = 'close-all-windows'
         'Hstart'           = 'hidden-start'
         'HotkeyScreener'   = 'hotkey-screener'
+        'MediaRemote'      = 'media-remote'
+        'PowerRemote'      = 'power-remote'
+        'PromptSense'      = 'promptsense'
         'ScreenshotRemote' = 'screenshot-remote'
         'StickyPreviews'   = 'sticky-previews'
         'TaskSwitchXP'     = 'taskswitchxp'
@@ -156,7 +157,7 @@ This application was found on https://www.ntwind.com/download-all.html but is no
 
     # Check if issue already exists for this application
     try {
-        $existingIssues = gh issue list --search "title:""$title""" --json title,state --limit 100 2>$null
+        $existingIssues = gh issue list --search "title:""$title""" --json title, state --limit 100 2>$null
 
         if ($existingIssues | ConvertFrom-Json | Where-Object { $_.state -eq 'OPEN' }) {
             Write-Host "  Issue already exists for $appName (skipping)"
@@ -167,8 +168,7 @@ This application was found on https://www.ntwind.com/download-all.html but is no
         gh issue create --title $title --body $body --assignee @me 2>$null
 
         Write-Host "  Issue created for $appName"
-    }
-    catch {
+    } catch {
         Write-Error ("Failed to create issue for {0}: {1}" -f $appName, $_)
     }
 }
@@ -193,12 +193,11 @@ foreach ($appName in $availableApps.Keys) {
 
 if ($newApps.Count -eq 0) {
     Write-Host "No new applications found"
-}
-else {
-        Write-Host ('Found {0} new application(s):' -f $newApps.Count)
-        foreach ($appName in $newApps.Keys | Sort-Object) {
-            $app = $newApps[$appName]
-            Write-Host ('  - {0} ({1})' -f $appName, $app.fileName)
+} else {
+    Write-Host ('Found {0} new application(s):' -f $newApps.Count)
+    foreach ($appName in $newApps.Keys | Sort-Object) {
+        $app = $newApps[$appName]
+        Write-Host ('  - {0} ({1})' -f $appName, $app.fileName)
         if ($CreateIssues -and (Get-Command gh -ErrorAction SilentlyContinue)) {
             New-GitHubIssue -appName $appName -fileName $app.fileName -url $app.url
         }
