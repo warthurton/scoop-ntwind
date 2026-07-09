@@ -25,6 +25,9 @@ param(
     [switch]$CreateIssues
 )
 
+# Track script-level errors so CI can fail only on real failures
+$script:HadErrors = $false
+
 # Get list of existing applications in the bucket
 function Get-BucketApplications {
     param([string]$BucketPath)
@@ -48,6 +51,7 @@ function Get-BucketApplications {
             }
         } catch {
             Write-Warning "Failed to parse $($file.Name): $($_)"
+            $script:HadErrors = $true
         }
     }
 
@@ -88,6 +92,7 @@ function Get-AvailableApplications {
         return $apps
     } catch {
         Write-Error "Failed to fetch download page: $($_)"
+        $script:HadErrors = $true
         return @{}
     }
 }
@@ -164,12 +169,18 @@ This application was found on https://www.ntwind.com/download-all.html but is no
             return
         }
 
-        $escapedBody = $body -replace '"', '\"' -replace "`n", '\n'
-        gh issue create --title $title --body $body --assignee @me 2>$null
+        gh issue create --title $title --body $body --assignee @me 2>$null | Out-Null
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to create issue for $appName (gh exit code: $LASTEXITCODE)"
+            $script:HadErrors = $true
+            return
+        }
 
         Write-Host "  Issue created for $appName"
     } catch {
         Write-Error ("Failed to create issue for {0}: {1}" -f $appName, $_)
+        $script:HadErrors = $true
     }
 }
 
@@ -206,5 +217,14 @@ if ($newApps.Count -eq 0) {
     if ($CreateIssues -and -not (Get-Command gh -ErrorAction SilentlyContinue)) {
         Write-Warning 'GitHub CLI (gh) not found. Skipping issue creation.'
         Write-Host 'Install GitHub CLI from: https://cli.github.com/'
+        $script:HadErrors = $true
     }
 }
+
+if ($script:HadErrors) {
+    Write-Error 'One or more errors occurred while checking for new applications.'
+    exit 1
+}
+
+Write-Host 'Check completed successfully.'
+exit 0
