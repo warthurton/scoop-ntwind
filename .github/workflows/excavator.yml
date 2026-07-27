@@ -8,6 +8,10 @@ jobs:
   excavate:
     name: Excavate
     runs-on: windows-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v5
       - name: Excavate
@@ -15,3 +19,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SKIP_UPDATED: 1
+      - name: Report Hash Failures
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ./bin/check-hash-failures.ps1 -CreateIssues
