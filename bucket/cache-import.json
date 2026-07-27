@@ -1,0 +1,21 @@
+{
+    "version": "1.0.0",
+    "description": "Add a manually downloaded installer to the Scoop cache, for manifests whose download is blocked (e.g. by Cloudflare). Adds the 'scoop cache-import' command",
+    "homepage": "https://github.com/warthurton/scoop-ntwind",
+    "license": "Unlicense",
+    "url": "https://raw.githubusercontent.com/warthurton/scoop-ntwind/master/bin/cache-import.ps1",
+    "hash": "c9d2bd76ab607038c8d05ce2861d73d693f0b6070fecfaba90829cc3520245c1",
+    "bin": [
+        [
+            "cache-import.ps1",
+            "scoop-cache-import"
+        ]
+    ],
+    "checkver": {
+        "url": "https://raw.githubusercontent.com/warthurton/scoop-ntwind/master/bin/cache-import.ps1",
+        "regex": "\\.VERSION\\s+([\\d.]+)"
+    },
+    "autoupdate": {
+        "url": "https://raw.githubusercontent.com/warthurton/scoop-ntwind/master/bin/cache-import.ps1"
+    }
+}
