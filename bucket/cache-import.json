@@ -4,7 +4,7 @@
     "homepage": "https://github.com/warthurton/scoop-ntwind",
     "license": "Unlicense",
     "url": "https://raw.githubusercontent.com/warthurton/scoop-ntwind/master/bin/cache-import.ps1",
-    "hash": "c9d2bd76ab607038c8d05ce2861d73d693f0b6070fecfaba90829cc3520245c1",
+    "hash": "a0457d83b1c98367e26068f0f1fad20c42879e51c01027441dd618e7009c6f12",
     "bin": [
         [
             "cache-import.ps1",
