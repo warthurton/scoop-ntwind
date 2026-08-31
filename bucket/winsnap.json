@@ -1,10 +1,10 @@
 {
-    "version": "6.2.4",
+    "version": "6.3.0",
     "description": "Screen capture utility for everyday tasks",
     "homepage": "https://www.ntwind.com/software/winsnap.html",
     "license": "Proprietary",
-    "url": "https://www.ntwind.com/download/WinSnap_6.2.4-setup.exe",
-    "hash": "47C406F4487102402D9CD335B712C4B8E124D07EB37CD258BA91C2EBC04B11F7",
+    "url": "https://www.ntwind.com/download/WinSnap_6.3.0-setup.exe",
+    "hash": "310578033b3bc9fc2f8fbf59cbcfa80e120b72f01e205ae943fbfc272c32c6d6",
     "notes": "If the download is blocked by Cloudflare, download the installer manually from the homepage, then run: scoop cache-import winsnap <path-to-file>",
     "depends": [
         "main/7zip",
